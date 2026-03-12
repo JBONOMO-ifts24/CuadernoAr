@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Cuadernos - Cuaderno AR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        .notebook-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .notebook-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .notebook-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+        .notebook-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary);
+        }
+        .notebook-card p {
+            margin: 0;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mis Cuadernos</h1>
+        <p class="subtitle">Selecciona un cuaderno para comenzar</p>
+        
+        <div id="notebook-list" class="notebook-list">
+            <p>Cargando cuadernos...</p>
+        </div>
+
+        <div id="message"></div>
+
+        <div class="footer">
+            <button onclick="logout()" style="background: none; border: none; color: var(--primary); cursor: pointer; text-decoration: underline;">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <script>
+        const notebookList = document.getElementById('notebook-list');
+        const messageDiv = document.getElementById('message');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        async function loadNotebooks() {
+            try {
+                const response = await fetch('/api/cuadernos/my', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const notebooks = await response.json();
+                    renderNotebooks(notebooks);
+                } else {
+                    messageDiv.textContent = 'Error al cargar los cuadernos';
+                    messageDiv.className = 'error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error de conexión';
+                messageDiv.className = 'error';
+            }
+        }
+
+        function renderNotebooks(notebooks) {
+            if (notebooks.length === 0) {
+                notebookList.innerHTML = `
+                    <div style="text-align: center; grid-column: 1 / -1; padding: 2rem;">
+                        <p style="margin-bottom: 2rem; opacity: 0.7;">No tienes cuadernos asociados aún.</p>
+                        <button onclick="window.location.href='/asociar-cuaderno.html'">Asociar cuaderno</button>
+                    </div>
+                `;
+                return;
+            }
+
+            notebookList.innerHTML = notebooks.map(n => `
+                <div class="notebook-card" onclick="selectNotebook('${n.id}')">
+                    <h3>${n.nombre_cuaderno || 'Cuaderno sin nombre'}</h3>
+                    <p>ID: ${n.identificador}</p>
+                </div>
+            `).join('');
+        }
+
+        function selectNotebook(id) {
+            window.location.href = `/cuaderno.html?id=${id}`;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        loadNotebooks();
+    </script>
+</body>
+</html>

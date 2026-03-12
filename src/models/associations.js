@@ -13,6 +13,10 @@ Marcador.belongsTo(Cuaderno, { foreignKey: 'pertenece_cuaderno', as: 'cuaderno' 
 Marcador.hasMany(InfoMarcador, { foreignKey: 'pertenece_marcador', as: 'informaciones' });
 InfoMarcador.belongsTo(Marcador, { foreignKey: 'pertenece_marcador', as: 'marcador' });
 
+// Un Usuario tiene muchos Cuadernos
+Usuario.hasMany(Cuaderno, { foreignKey: 'id_usuario', as: 'cuadernos' });
+Cuaderno.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
+
 module.exports = {
     Usuario,
     Cuaderno,

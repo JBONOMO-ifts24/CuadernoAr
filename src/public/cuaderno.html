@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Cuaderno AR</title>
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- AR.js con soporte para barcode (matrix) -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-layer">
+        <h2 id="notebook-name" style="margin: 0; font-size: 1.2rem;">Cargando...</h2>
+        <p id="status-msg" style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8;">Iniciando cámara...</p>
+    </div>
+    
+    <button id="back-btn" onclick="window.location.href='/listado-cuadernos.html'">Volver</button>
+
+    <!-- Configure AR.js to use barcode markers -->
+    <a-scene 
+        embedded 
+        arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+        id="ar-scene">
+        
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        const uiName = document.getElementById('notebook-name');
+        const uiStatus = document.getElementById('status-msg');
+        const scene = document.getElementById('ar-scene');
+        const token = localStorage.getItem('token');
+        
+        // Extract ID from URL (?id=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const cuadernoId = urlParams.get('id');
+
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        if (!cuadernoId) {
+            alert('No se especificó un cuaderno.');
+            window.location.href = '/listado-cuadernos.html';
+        }
+
+        async function initAR() {
+            try {
+                uiStatus.textContent = 'Obteniendo marcadores...';
+                
+                // Fetch markers for this notebook
+                const markersRes = await fetch(`/api/marcadores/cuaderno/${cuadernoId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!markersRes.ok) throw new Error('Error al cargar marcadores');
+                const marcadores = await markersRes.json();
+                
+                if (marcadores.length === 0) {
+                    uiStatus.textContent = 'Este cuaderno no tiene marcadores asociados.';
+                    return;
+                }
+
+                uiName.textContent = `Cuaderno AR (${marcadores.length} marcadores)`;
+                uiStatus.textContent = 'Cargando contenido...';
+
+                // For each marker, fetch active info and build elements
+                for (const marcador of marcadores) {
+                    const infoRes = await fetch(`/api/info/marcador/${marcador.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    const infos = await infoRes.json();
+                    
+                    // Create barcode marker element
+                    const markerEl = document.createElement('a-marker');
+                    markerEl.setAttribute('type', 'barcode');
+                    markerEl.setAttribute('value', marcador.codigo_asociado);
+                    
+                    // Handle info rendering
+                    if (infos.length > 0) {
+                        // We assume there's only one active info due to the validation we built
+                        const activeInfo = infos[0];
+                        
+                        // Render based on type
+                        buildAFrameElement(markerEl, activeInfo);
+                    }
+                    
+                    scene.insertBefore(markerEl, document.querySelector('[camera]'));
+                }
+                
+                uiStatus.textContent = 'Busca los marcadores con tu cámara.';
+
+            } catch (err) {
+                console.error(err);
+                uiStatus.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        function buildAFrameElement(parentEl, info) {
+            let el;
+            switch (info.tipo_info) {
+                case 'texto':
+                    el = document.createElement('a-text');
+                    el.setAttribute('value', info.data);
+                    el.setAttribute('position', '0 0.5 0');
+                    el.setAttribute('rotation', '-90 0 0');
+                    el.setAttribute('color', '#000000'); // Black text
+                    el.setAttribute('align', 'center');
+                    break;
+                case 'imagen':
+                    // We assume 'data' contains the image URL/path
+                    el = document.createElement('a-image');
+                    el.setAttribute('src', info.data);
+                    el.setAttribute('position', '0 0.5 0');
+                    el.setAttribute('rotation', '-90 0 0');
+                    break;
+                case 'link':
+                    el = document.createElement('a-text');
+                    el.setAttribute('value', 'LINK: ' + info.data);
+                    el.setAttribute('position', '0 0.5 0');
+                    el.setAttribute('rotation', '-90 0 0');
+                    el.setAttribute('color', '#6366f1');
+                    el.setAttribute('align', 'center');
+                    // Add interactivity for links later if needed
+                    break;
+                case 'video':
+                case '3d':
+                default:
+                    // Fallback for unsupported/placeholder types
+                    el = document.createElement('a-box');
+                    el.setAttribute('position', '0 0.5 0');
+                    el.setAttribute('color', '#4CC3D9');
+                    // Add text to know what it is
+                    const textEl = document.createElement('a-text');
+                    textEl.setAttribute('value', 'Tipo: ' + info.tipo_info);
+                    textEl.setAttribute('position', '0 1 0');
+                    textEl.setAttribute('color', 'black');
+                    textEl.setAttribute('align', 'center');
+                    el.appendChild(textEl);
+                    break;
+            }
+            parentEl.appendChild(el);
+        }
+
+        // Start initialization
+        initAR();
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.use(authMiddleware);
 
 router.post('/', cuadernoController.createCuaderno);
+router.get('/my', cuadernoController.getMyCuadernos);
 router.get('/', cuadernoController.getAllCuadernos);
 router.put('/:id', cuadernoController.updateCuaderno);
 

@@ -9,6 +9,14 @@ const Cuaderno = sequelize.define('Cuaderno', {
         unique: true,
         comment: 'Código especial del modelo'
     },
+    id_usuario: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'usuarios',
+            key: 'id'
+        }
+    },
     nombre_cuaderno: {
         type: DataTypes.STRING,
         allowNull: true,

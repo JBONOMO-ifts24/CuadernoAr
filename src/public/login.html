@@ -60,9 +60,23 @@
                     localStorage.setItem('token', result.token);
                     localStorage.setItem('user', JSON.stringify(result.user));
                     
-                    setTimeout(() => {
-                        window.location.href = '/dashboard.html'; // Próximamente
-                    }, 1500);
+                    // Obtener cuadernos para decidir redirección
+                    try {
+                        const cbResponse = await fetch('/api/cuadernos/my', {
+                            headers: { 'Authorization': `Bearer ${result.token}` }
+                        });
+                        const notebooks = await cbResponse.json();
+
+                        setTimeout(() => {
+                            if (notebooks.length === 1) {
+                                window.location.href = `/cuaderno.html?id=${notebooks[0].id}`;
+                            } else {
+                                window.location.href = '/listado-cuadernos.html';
+                            }
+                        }, 1000);
+                    } catch (err) {
+                        window.location.href = '/listado-cuadernos.html';
+                    }
                 } else {
                     messageDiv.textContent = result.error || 'Error al iniciar sesión';
                     messageDiv.className = 'error';
