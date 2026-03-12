@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const https = require('https');
 const sequelize = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -34,9 +36,33 @@ async function startServer() {
         await sequelize.sync({ alter: true });
         console.log('Modelos sincronizados.');
 
-        app.listen(PORT, () => {
-            console.log(`El servidor está corriendo en el puerto ${PORT}`);
-        });
+        const HTTPS_ENABLE = process.env.HTTPS_ENABLE === 'true';
+
+        if (HTTPS_ENABLE) {
+            const certPath = path.join(__dirname, '..', '.certs', 'cert.pem');
+            const keyPath = path.join(__dirname, '..', '.certs', 'key.pem');
+
+            if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+                const options = {
+                    key: fs.readFileSync(keyPath),
+                    cert: fs.readFileSync(certPath)
+                };
+                https.createServer(options, app).listen(PORT, () => {
+                    console.log(`Servidor HTTPS corriendo en: https://localhost:${PORT}`);
+                });
+            } else {
+                console.error('Error: No se encontraron los certificados en .certs/');
+                console.log('Ejecuta el script de generacin de certificados o asegrate de que existan.');
+                // Fallback a HTTP si fallan los certificados
+                app.listen(PORT, () => {
+                    console.log(`Servidor HTTP (fallback) corriendo en: http://localhost:${PORT}`);
+                });
+            }
+        } else {
+            app.listen(PORT, () => {
+                console.log(`Servidor HTTP corriendo en: http://localhost:${PORT}`);
+            });
+        }
     } catch (error) {
         console.error('Error al conectar a la base de datos:', error);
     }
