@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cuaderno AR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div class="container" id="login-container">
+        <h1>Bienvenido</h1>
+        <p class="subtitle">Ingresa a tu cuenta de Cuaderno AR</p>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="usuario">Usuario</label>
+                <input type="text" id="usuario" name="usuario" required placeholder="Tu nombre de usuario">
+            </div>
+            
+            <div class="form-group">
+                <label for="contraseña">Contraseña</label>
+                <input type="password" id="contraseña" name="contraseña" required placeholder="••••••••">
+            </div>
+            
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+
+        <div id="message"></div>
+
+        <div class="footer">
+            ¿No tienes cuenta? <a href="register.html">Regístrate aquí</a>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const messageDiv = document.getElementById('message');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = '¡Login exitoso! Redirigiendo...';
+                    messageDiv.className = 'success';
+                    messageDiv.style.display = 'block';
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html'; // Próximamente
+                    }, 1500);
+                } else {
+                    messageDiv.textContent = result.error || 'Error al iniciar sesión';
+                    messageDiv.className = 'error';
+                    messageDiv.style.display = 'block';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error de conexión con el servidor';
+                messageDiv.className = 'error';
+                messageDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
