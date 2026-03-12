@@ -19,7 +19,12 @@
             color: white;
             padding: 10px 20px;
             border-radius: 8px;
-            pointer-events: none;
+        }
+        #detected-marker-container {
+            pointer-events: auto;
+        }
+        #marker-detail-btn {
+            pointer-events: auto;
         }
         #back-btn {
             position: absolute;
@@ -37,11 +42,6 @@
     </style>
 </head>
 <body>
-    <div id="ui-layer">
-        <h2 id="notebook-name" style="margin: 0; font-size: 1.2rem;">Cargando...</h2>
-        <p id="status-msg" style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8;">Iniciando cámara...</p>
-    </div>
-    
     <button id="back-btn" onclick="window.location.href='/listado-cuadernos.html'">Volver</button>
 
     <!-- Configure AR.js to use barcode markers -->
@@ -52,10 +52,23 @@
         
         <a-entity camera></a-entity>
     </a-scene>
+    
+    <div id="ui-layer">
+        <h2 id="notebook-name" style="margin: 0; font-size: 1.2rem;">Cargando...</h2>
+        <p id="status-msg" style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8;">Iniciando cámara...</p>
+        <div id="detected-marker-container" style="margin: 10px 0 0 0; display: none;">
+            <p id="detected-marker" style="margin: 0 0 8px 0; font-size: 1rem; color: #4ade80; font-weight: bold;"></p>
+            <button id="marker-detail-btn" style="background: #4ade80; color: #000; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Ver Detalles →</button>
+        </div>
+    </div>
+</body>
 
     <script>
         const uiName = document.getElementById('notebook-name');
         const uiStatus = document.getElementById('status-msg');
+        const detectedMarkerUI = document.getElementById('detected-marker');
+        const detectedMarkerContainer = document.getElementById('detected-marker-container');
+        const markerDetailBtn = document.getElementById('marker-detail-btn');
         const scene = document.getElementById('ar-scene');
         const token = localStorage.getItem('token');
         
@@ -92,27 +105,32 @@
                 uiName.textContent = `Cuaderno AR (${marcadores.length} marcadores)`;
                 uiStatus.textContent = 'Cargando contenido...';
 
-                // For each marker, fetch active info and build elements
+                // For each marker, create a red box
                 for (const marcador of marcadores) {
-                    const infoRes = await fetch(`/api/info/marcador/${marcador.id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    const infos = await infoRes.json();
-                    
                     // Create barcode marker element
                     const markerEl = document.createElement('a-marker');
                     markerEl.setAttribute('type', 'barcode');
                     markerEl.setAttribute('value', marcador.codigo_asociado);
                     
-                    // Handle info rendering
-                    if (infos.length > 0) {
-                        // We assume there's only one active info due to the validation we built
-                        const activeInfo = infos[0];
-                        
-                        // Render based on type
-                        buildAFrameElement(markerEl, activeInfo);
-                    }
+                    // Add red box
+                    const boxEl = document.createElement('a-box');
+                    boxEl.setAttribute('position', '0 0.5 0');
+                    boxEl.setAttribute('color', '#ff0000');
+                    boxEl.setAttribute('data-marcador-id', marcador.id);
+                    markerEl.appendChild(boxEl);
+                    
+                    // Add event listeners for marker detection
+                    markerEl.addEventListener('markerFound', () => {
+                        detectedMarkerUI.textContent = `✓ Detectado el marcador: ${marcador.codigo_asociado}`;
+                        detectedMarkerContainer.style.display = 'block';
+                        markerDetailBtn.onclick = () => {
+                            window.location.href = `/marcador-detalle.html?id=${marcador.id}&cuaderno=${cuadernoId}`;
+                        };
+                    });
+                    
+                    markerEl.addEventListener('markerLost', () => {
+                        detectedMarkerContainer.style.display = 'none';
+                    });
                     
                     scene.insertBefore(markerEl, document.querySelector('[camera]'));
                 }
@@ -125,54 +143,55 @@
             }
         }
 
-        function buildAFrameElement(parentEl, info) {
-            let el;
-            switch (info.tipo_info) {
-                case 'texto':
-                    el = document.createElement('a-text');
-                    el.setAttribute('value', info.data);
-                    el.setAttribute('position', '0 0.5 0');
-                    el.setAttribute('rotation', '-90 0 0');
-                    el.setAttribute('color', '#000000'); // Black text
-                    el.setAttribute('align', 'center');
-                    break;
-                case 'imagen':
-                    // We assume 'data' contains the image URL/path
-                    el = document.createElement('a-image');
-                    el.setAttribute('src', info.data);
-                    el.setAttribute('position', '0 0.5 0');
-                    el.setAttribute('rotation', '-90 0 0');
-                    break;
-                case 'link':
-                    el = document.createElement('a-text');
-                    el.setAttribute('value', 'LINK: ' + info.data);
-                    el.setAttribute('position', '0 0.5 0');
-                    el.setAttribute('rotation', '-90 0 0');
-                    el.setAttribute('color', '#6366f1');
-                    el.setAttribute('align', 'center');
-                    // Add interactivity for links later if needed
-                    break;
-                case 'video':
-                case '3d':
-                default:
-                    // Fallback for unsupported/placeholder types
-                    el = document.createElement('a-box');
-                    el.setAttribute('position', '0 0.5 0');
-                    el.setAttribute('color', '#4CC3D9');
-                    // Add text to know what it is
-                    const textEl = document.createElement('a-text');
-                    textEl.setAttribute('value', 'Tipo: ' + info.tipo_info);
-                    textEl.setAttribute('position', '0 1 0');
-                    textEl.setAttribute('color', 'black');
-                    textEl.setAttribute('align', 'center');
-                    el.appendChild(textEl);
-                    break;
-            }
-            parentEl.appendChild(el);
-        }
+
 
         // Start initialization
         initAR();
+        
+        // Handle clicks on canvas for A-Frame objects
+        document.addEventListener('click', (event) => {
+            const scene = document.getElementById('ar-scene');
+            const camera = scene.querySelector('[camera]');
+            
+            if (!camera) return;
+            
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            // Get mouse position relative to canvas
+            const canvas = scene.canvas || scene.renderer.domElement;
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            // Set raycaster from camera
+            raycaster.setFromCamera(mouse, camera.getObject3D('camera'));
+            
+            // Check all objects in scene
+            const objectsToTest = [];
+            scene.object3D.traverse((obj) => {
+                if (obj.userData && obj.userData['markerjs-marker-element']) return;
+                objectsToTest.push(obj);
+            });
+            
+            const intersects = raycaster.intersectObjects(objectsToTest, true);
+            
+            if (intersects.length > 0) {
+                // Find the first object that has a data attribute for marcador-id
+                for (let intersection of intersects) {
+                    let obj = intersection.object;
+                    while (obj) {
+                        const el = obj.el;
+                        if (el && el.hasAttribute('data-marcador-id')) {
+                            const marcadorId = el.getAttribute('data-marcador-id');
+                            window.location.href = `/marcador-detalle.html?id=${marcadorId}&cuaderno=${cuadernoId}`;
+                            return;
+                        }
+                        obj = obj.parent;
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>

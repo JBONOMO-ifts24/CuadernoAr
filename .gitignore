@@ -12,3 +12,7 @@ yarn-error.log*
 coverage/
 .jest/
 test-results/
+
+# HTTPS Certificates
+.certs/
+generate_certs.js

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Marcador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: white;
+            margin: 0;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .marcador-info {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .marcador-info:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .value {
+            color: #333;
+            font-size: 1.1rem;
+            word-break: break-all;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .no-info {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .no-info p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            color: #333;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Detalle del Marcador</h1>
+            <button class="back-btn" onclick="volverAlCuaderno()">← Volver</button>
+        </div>
+        
+        <div id="message-container"></div>
+        
+        <div id="content" class="loading">
+            <div class="spinner"></div>
+            <p>Cargando información...</p>
+        </div>
+    </div>
+    
+    <!-- Modal para agregar nueva información -->
+    <div id="add-info-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Información al Marcador</h2>
+            </div>
+            <form id="add-info-form">
+                <div class="form-group">
+                    <label for="tipo-info">Tipo de Información:</label>
+                    <select id="tipo-info" required>
+                        <option value="">-- Seleccionar tipo --</option>
+                        <option value="texto">Texto</option>
+                        <option value="imagen">Imagen (URL)</option>
+                        <option value="video">Video (URL)</option>
+                        <option value="link">Link</option>
+                        <option value="3d">Modelo 3D (URL)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data">Contenido:</label>
+                    <textarea id="data" placeholder="Ingresa el contenido aquí" required></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('add-info-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Información</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const marcadorId = urlParams.get('id');
+        const cuadernoId = urlParams.get('cuaderno');
+        
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        if (!marcadorId || !cuadernoId) {
+            alert('Parámetros inválidos');
+            window.location.href = '/listado-cuadernos.html';
+        }
+        
+        async function loadMarcadorDetails() {
+            try {
+                // Obtener detalle del marcador
+                const marcadorRes = await fetch(`/api/marcadores/cuaderno/${cuadernoId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!marcadorRes.ok) throw new Error('Error al cargar marcador');
+                const marcadores = await marcadorRes.json();
+                const marcador = marcadores.find(m => m.id == marcadorId);
+                
+                if (!marcador) throw new Error('Marcador no encontrado');
+                
+                // Obtener información del marcador
+                const infoRes = await fetch(`/api/info-marcadores/marcador/${marcadorId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!infoRes.ok) throw new Error('Error al cargar información');
+                const infos = await infoRes.json();
+                
+                renderContent(marcador, infos);
+            } catch (error) {
+                showMessage(error.message, 'error');
+                document.getElementById('content').innerHTML = `
+                    <div class="card">
+                        <p style="color: #666; text-align: center;">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderContent(marcador, infos) {
+            const content = document.getElementById('content');
+            const hasActiveInfo = infos.length > 0;
+            const activeInfo = hasActiveInfo ? infos[0] : null;
+            
+            let html = `
+                <div class="card">
+                    <div class="marcador-info">
+                        <div class="label">Código del Marcador</div>
+                        <div class="value">${marcador.codigo_asociado}</div>
+                    </div>
+            `;
+            
+            if (hasActiveInfo) {
+                html += `
+                    <div class="marcador-info">
+                        <div class="label">Estado</div>
+                        <span class="status active">Activo</span>
+                    </div>
+                    
+                    <div class="marcador-info">
+                        <div class="label">Tipo de Información</div>
+                        <div class="value">${formatTipoInfo(activeInfo.tipo_info)}</div>
+                    </div>
+                    
+                    <div class="marcador-info">
+                        <div class="label">Contenido</div>
+                        <div class="value">${escapeHtml(activeInfo.data)}</div>
+                    </div>
+                    
+                    <div class="marcador-info">
+                        <div class="label">Fecha de Creación</div>
+                        <div class="value">${formatDate(activeInfo.createdAt)}</div>
+                    </div>
+                    
+                    <div class="marcador-info">
+                        <div class="label">Última Actualización</div>
+                        <div class="value">${formatDate(activeInfo.updatedAt)}</div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-danger" onclick="suspendInfo(${activeInfo.id})">Suspender Información</button>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="no-info">
+                        <p>⚠️ Este marcador no tiene información asociada</p>
+                        <p style="font-size: 0.95rem; color: #aaa;">Agrega nueva información para que aparezca contenido cuando se detecte el marcador</p>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="openModal('add-info-modal')">+ Agregar Información</button>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            content.innerHTML = html;
+        }
+        
+        function formatTipoInfo(tipo) {
+            const tipos = {
+                'texto': '📝 Texto',
+                'imagen': '🖼️ Imagen',
+                'video': '🎥 Video',
+                'link': '🔗 Link',
+                '3d': '🎭 Modelo 3D'
+            };
+            return tipos[tipo] || tipo;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+        
+        async function suspendInfo(infoId) {
+            if (!confirm('¿Estás seguro de que quieres suspender esta información?')) {
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/info-marcadores/${infoId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!res.ok) throw new Error('Error al suspender información');
+                
+                showMessage('Información suspendida correctamente', 'success');
+                setTimeout(() => {
+                    loadMarcadorDetails();
+                }, 1500);
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+        
+        document.getElementById('add-info-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const tipo = document.getElementById('tipo-info').value;
+            const data = document.getElementById('data').value;
+            
+            if (!tipo || !data) {
+                showMessage('Por favor completa todos los campos', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/info-marcadores', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pertenece_marcador: marcadorId,
+                        tipo_info: tipo,
+                        data: data
+                    })
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Error al crear información');
+                }
+                
+                showMessage('Información agregada correctamente', 'success');
+                closeModal('add-info-modal');
+                document.getElementById('add-info-form').reset();
+                setTimeout(() => {
+                    loadMarcadorDetails();
+                }, 1500);
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        });
+        
+        function volverAlCuaderno() {
+            window.location.href = `/listado-cuadernos.html`;
+        }
+        
+        // Cargar detalles al iniciar
+        loadMarcadorDetails();
+    </script>
+</body>
+</html>

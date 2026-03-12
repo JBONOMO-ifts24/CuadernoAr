@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcadores del Cuaderno</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header-left {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        h1 {
+            color: white;
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .loading {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .spinner {
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .marcadores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .marcador-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .marcador-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+        
+        .marcador-code {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .info-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.inactive {
+            background: #ffeaea;
+            color: #721c24;
+        }
+        
+        .info-type {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .no-info {
+            color: #999;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        
+        .card-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            word-break: break-word;
+            max-height: 60px;
+            overflow: hidden;
+        }
+        
+        .card-button {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .card-button:hover {
+            background: #5568d3;
+        }
+        
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .empty-state-title {
+            color: #333;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state-text {
+            color: #999;
+            margin-bottom: 25px;
+        }
+        
+        .btn-create {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-create:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .error-message {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #721c24;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Marcadores</h1>
+                <p class="subtitle" id="subtitle">Cargando...</p>
+            </div>
+            <button class="back-btn" onclick="window.location.href='/listado-cuadernos.html'">← Volver</button>
+        </div>
+        
+        <div id="message-container"></div>
+        <div id="content" class="loading">
+            <div class="spinner"></div>
+            <p>Cargando marcadores...</p>
+        </div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const cuadernoId = urlParams.get('id');
+        const cuadernoNombre = urlParams.get('nombre');
+        
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        if (!cuadernoId) {
+            alert('Cuaderno no especificado');
+            window.location.href = '/listado-cuadernos.html';
+        }
+        
+        document.getElementById('subtitle').textContent = cuadernoNombre || `Cuaderno #${cuadernoId}`;
+        
+        async function loadMarcadores() {
+            try {
+                const res = await fetch(`/api/marcadores/cuaderno/${cuadernoId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!res.ok) throw new Error('Error al cargar marcadores');
+                const marcadores = await res.json();
+                
+                if (marcadores.length === 0) {
+                    renderEmpty();
+                } else {
+                    await renderMarcadores(marcadores);
+                }
+            } catch (error) {
+                renderError(error.message);
+            }
+        }
+        
+        async function renderMarcadores(marcadores) {
+            const content = document.getElementById('content');
+            let html = '<div class="marcadores-grid">';
+            
+            for (const marcador of marcadores) {
+                try {
+                    const infoRes = await fetch(`/api/info-marcadores/marcador/${marcador.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    const infos = await infoRes.json();
+                    const hasInfo = infos.length > 0;
+                    const info = hasInfo ? infos[0] : null;
+                    
+                    html += `
+                        <div class="marcador-card">
+                            <div class="marcador-code">${marcador.codigo_asociado}</div>
+                            
+                            <div class="info-status">
+                                ${info ? `
+                                    <span class="status-badge active">✓ Activo</span>
+                                    <span class="info-type">${formatTipoInfo(info.tipo_info)}</span>
+                                ` : `
+                                    <span class="status-badge inactive">Sin información</span>
+                                `}
+                            </div>
+                            
+                            ${info ? `
+                                <div class="card-description">${escapeHtml(info.data).substring(0, 100)}${escapeHtml(info.data).length > 100 ? '...' : ''}</div>
+                            ` : `
+                                <div class="no-info">Este marcador no tiene información asociada</div>
+                            `}
+                            
+                            <button class="card-button" onclick="goToMarcador(${marcador.id})">
+                                Ver Detalles →
+                            </button>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Error cargando info para marcador', marcador.id, error);
+                    html += `
+                        <div class="marcador-card">
+                            <div class="marcador-code">${marcador.codigo_asociado}</div>
+                            <div style="color: #999; padding: 20px; text-align: center;">Error cargando información</div>
+                            <button class="card-button" onclick="goToMarcador(${marcador.id})">
+                                Ver Detalles →
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+            
+            html += '</div>';
+            content.innerHTML = html;
+        }
+        
+        function formatTipoInfo(tipo) {
+            const tipos = {
+                'texto': '📝 Texto',
+                'imagen': '🖼️ Imagen',
+                'video': '🎥 Video',
+                'link': '🔗 Link',
+                '3d': '🎭 Modelo 3D'
+            };
+            return tipos[tipo] || tipo;
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        function renderEmpty() {
+            document.getElementById('content').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📍</div>
+                    <h2 class="empty-state-title">No hay marcadores</h2>
+                    <p class="empty-state-text">Este cuaderno aún no tiene marcadores asociados</p>
+                    <button class="btn-create" onclick="window.location.href='/listado-cuadernos.html'">
+                        Volver al cuaderno
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderError(message) {
+            document.getElementById('content').innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Error: ${message}</p>
+                    <button class="btn-create" style="margin-top: 20px;" onclick="window.location.href='/listado-cuadernos.html'">
+                        Volver
+                    </button>
+                </div>
+            `;
+        }
+        
+        function goToMarcador(marcadorId) {
+            window.location.href = `/marcador-detalle.html?id=${marcadorId}&cuaderno=${cuadernoId}`;
+        }
+        
+        // Cargar marcadores al iniciar
+        loadMarcadores();
+    </script>
+</body>
+</html>

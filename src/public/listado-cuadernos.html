@@ -21,8 +21,9 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 1.5rem;
             border-radius: 12px;
-            cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
         .notebook-card:hover {
             transform: translateY(-5px);
@@ -37,6 +38,39 @@
             margin: 0;
             opacity: 0.7;
             font-size: 0.9rem;
+            flex: 1;
+        }
+        .notebook-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .notebook-btn {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .notebook-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .notebook-btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .notebook-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .notebook-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -96,15 +130,27 @@
             }
 
             notebookList.innerHTML = notebooks.map(n => `
-                <div class="notebook-card" onclick="selectNotebook('${n.id}')">
+                <div class="notebook-card">
                     <h3>${n.nombre_cuaderno || 'Cuaderno sin nombre'}</h3>
                     <p>ID: ${n.identificador}</p>
+                    <div class="notebook-actions">
+                        <button class="notebook-btn notebook-btn-primary" onclick="selectNotebook('${n.id}')">
+                            Ver en AR →
+                        </button>
+                        <button class="notebook-btn notebook-btn-secondary" onclick="viewMarkers('${n.id}', '${n.nombre_cuaderno || 'Cuaderno'}')">
+                            📍 Marcadores
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
 
         function selectNotebook(id) {
             window.location.href = `/cuaderno.html?id=${id}`;
+        }
+
+        function viewMarkers(id, nombre) {
+            window.location.href = `/listado-marcadores.html?id=${id}&nombre=${encodeURIComponent(nombre)}`;
         }
 
         function logout() {
